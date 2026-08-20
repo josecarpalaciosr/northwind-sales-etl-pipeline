@@ -53,7 +53,18 @@ def get_table_columns(connection: sqlite3.Connection,table_name: str,) -> list[t
 
     return cursor.fetchall()
 
-def main() -> None: 
+def get_foreign_keys(connection: sqlite3.Connection,table_name: str,) -> list[tuple]:
+    """Return foreign-key metadata for the specified table."""
+
+    # PRAGMA foreign_key_list describes relationships declared
+    # between the current table and other tables. (id, seq, table, from, to, on_update, on_delete, match)
+    query = f'PRAGMA foreign_key_list("{table_name}");'
+
+    cursor = connection.execute(query)
+
+    return cursor.fetchall()
+
+def main() -> None:
     """Inspect the Northwind database and print a summary of its tables."""
 
     # Fail early instead of allowing SQLite to create an empty database
@@ -75,16 +86,17 @@ def main() -> None:
         for table_name in table_names:
             row_count = get_row_count(connection, table_name)
             columns = get_table_columns(connection, table_name)
+            foreign_keys = get_foreign_keys(connection, table_name)
 
             print(f"\n{table_name} ({row_count:,} rows)")
 
             for column in columns:
                 (
-                    column_id,
+                    _column_id,
                     column_name,
                     data_type,
                     not_null,
-                    default_value,
+                    _default_value,
                     primary_key,
                 ) = column
 
@@ -106,6 +118,28 @@ def main() -> None:
                     f"  - {column_name}: {data_type}"
                     f"{constraint_text}"
                 )
+            if foreign_keys:
+                print(
+                    f"  Foreign keys ({table_name}): "
+                    f"{len(foreign_keys)}"
+                )
+
+                for foreign_key in foreign_keys:
+                    (
+                        _foreign_key_id,
+                        _sequence,
+                        referenced_table,
+                        source_column,
+                        referenced_column,
+                        _on_update,
+                        _on_delete,
+                        _match_type,
+                    ) = foreign_key
+
+                    print(
+                        f"    - {source_column} -> "
+                        f"{referenced_table}.{referenced_column}"
+                    )
 
     finally:
         # Always release the database connection, even if an error occurs.
