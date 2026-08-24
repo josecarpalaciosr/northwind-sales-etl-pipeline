@@ -1,8 +1,8 @@
-# Northwind Source Data Model
+# Northwind Source Database ER Diagram
 
-This document describes the main relationships in the operational Northwind SQLite database used as the source of the ETL pipeline.
+> The diagrams show the relationships and columns relevant to the initial sales ETL pipeline, not every physical column in the source database.
 
-## Core Sales Model
+## Core Sales Relationships
 
 ```mermaid
 erDiagram
@@ -41,6 +41,8 @@ erDiagram
         datetime ShippedDate
         int ShipVia FK
         numeric Freight
+        string ShipCity
+        string ShipCountry
     }
 
     ORDER_DETAILS {
@@ -74,45 +76,52 @@ erDiagram
     }
 ```
 
-`ORDER_DETAILS` represents the source table named `"Order Details"` in SQLite. The underscore is used in the diagram to avoid spaces in the entity identifier.
-
 ## Supporting Relationships
 
 ```mermaid
 erDiagram
-    EMPLOYEES o|--o{ EMPLOYEES : manages
-    EMPLOYEES ||--o{ EMPLOYEE_TERRITORIES : assigned_to
-    TERRITORIES ||--o{ EMPLOYEE_TERRITORIES : includes
     REGIONS ||--o{ TERRITORIES : contains
-    CUSTOMERS ||--o{ CUSTOMER_CUSTOMER_DEMO : classified_as
+    TERRITORIES ||--o{ EMPLOYEE_TERRITORIES : includes
+    EMPLOYEES ||--o{ EMPLOYEE_TERRITORIES : assigned_to
+    EMPLOYEES o|--o{ EMPLOYEES : manages
+
     CUSTOMER_DEMOGRAPHICS ||--o{ CUSTOMER_CUSTOMER_DEMO : describes
+    CUSTOMERS ||--o{ CUSTOMER_CUSTOMER_DEMO : classified_as
+
+    REGIONS {
+        int RegionID PK
+        string RegionDescription
+    }
+
+    TERRITORIES {
+        string TerritoryID PK
+        string TerritoryDescription
+        int RegionID FK
+    }
+
+    EMPLOYEES {
+        int EmployeeID PK
+        int ReportsTo FK
+    }
+
+    EMPLOYEE_TERRITORIES {
+        int EmployeeID PK, FK
+        string TerritoryID PK, FK
+    }
+
+    CUSTOMER_DEMOGRAPHICS {
+        string CustomerTypeID PK
+        string CustomerDesc
+    }
+
+    CUSTOMERS {
+        string CustomerID PK
+    }
+
+    CUSTOMER_CUSTOMER_DEMO {
+        string CustomerID PK, FK
+        string CustomerTypeID PK, FK
+    }
 ```
 
 The customer demographic tables currently contain no records and are not required by the initial sales ETL pipeline.
-
-## Key Relationship Types
-
-- One customer can place many orders.
-- One employee can handle many orders.
-- One shipper can deliver many orders.
-- One order contains many order-detail lines.
-- One product can appear in many order-detail lines.
-- One category can contain many products.
-- One supplier can supply many products.
-- One employee can report to another employee.
-- Employees and territories have a many-to-many relationship through `EmployeeTerritories`.
-
-## ETL Relevance
-
-The initial ETL pipeline will focus on the core sales tables:
-
-- `Orders`
-- `"Order Details"`
-- `Products`
-- `Categories`
-- `Customers`
-- `Employees`
-- `Shippers`
-- `Suppliers`
-
-These relationships determine the joins, referential-integrity validations, dimensional model, and table-loading order used by the pipeline.
