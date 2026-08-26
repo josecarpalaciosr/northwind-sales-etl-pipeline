@@ -28,3 +28,8 @@ logs/*.log
 # Operating system files
 .DS_Store
 Thumbs.db
+
+# Python package build artifacts (from python -m pip install -e .)
+*.egg-info/
+build/
+dist/
