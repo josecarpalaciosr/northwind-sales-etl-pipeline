@@ -7,6 +7,7 @@ from northwind_etl.extract import (
     extract_sales_order_lines,
 )
 from northwind_etl.transform import transform_sales_order_lines
+from northwind_etl.validate import validate_sales_order_lines
 
 
 def run_pipeline() -> None:
@@ -40,6 +41,9 @@ def run_pipeline() -> None:
         raise ValueError(
             "Transformation changed the number of sales order lines."
         )
+
+    # Validate the transformed dataset before loading it.
+    validate_sales_order_lines(transformed_data)
 
     # Display the dimensions produced by each pipeline stage.
     print(
