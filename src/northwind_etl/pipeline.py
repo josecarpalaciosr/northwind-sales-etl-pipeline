@@ -6,8 +6,13 @@ from northwind_etl.extract import (
     SOURCE_DATABASE_PATH,
     extract_sales_order_lines,
 )
+from northwind_etl.load import (
+    TARGET_DATABASE_PATH,
+    load_sales_order_lines,
+)
 from northwind_etl.transform import transform_sales_order_lines
 from northwind_etl.validate import validate_sales_order_lines
+
 
 
 def run_pipeline() -> None:
@@ -45,6 +50,9 @@ def run_pipeline() -> None:
     # Validate the transformed dataset before loading it.
     validate_sales_order_lines(transformed_data)
 
+    # Load the validated DataFrame into the analytical SQLite database.
+    loaded_row_count = load_sales_order_lines(transformed_data)
+
     # Display the dimensions produced by each pipeline stage.
     print(
         f"Extracted shape: "
@@ -56,6 +64,11 @@ def run_pipeline() -> None:
         f"{transformed_data.shape[0]:,} rows x "
         f"{transformed_data.shape[1]} columns"
     )
+    print(
+        f"Loaded shape: "
+        f"{loaded_row_count:,} rows"
+    )
+    print(f"Target database: {TARGET_DATABASE_PATH}")
 
     # Display selected transformed columns for manual verification.
     preview_columns = [
