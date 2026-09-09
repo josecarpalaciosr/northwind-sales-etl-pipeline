@@ -2,7 +2,6 @@
 
 import pandas as pd
 
-
 # Columns required to validate the structure and financial calculations.
 REQUIRED_COLUMNS = {
     "OrderID",
@@ -14,7 +13,6 @@ REQUIRED_COLUMNS = {
     "DiscountAmount",
     "NetRevenue",
 }
-
 
 def validate_sales_order_lines(data: pd.DataFrame) -> None:
     """Validate transformed sales data using structural and business rules."""
@@ -129,6 +127,3 @@ def validate_sales_order_lines(data: pd.DataFrame) -> None:
                 f"Found {invalid_value_count:,} inconsistent values "
                 f"in {column_name}."
             )
-
-    # This line is reached only if every validation rule passed.
-    print(f"Validation passed: {len(data):,} sales order lines checked.")
