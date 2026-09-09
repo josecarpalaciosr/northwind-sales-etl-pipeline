@@ -46,7 +46,7 @@ def main() -> None:
     connection = sqlite3.connect(SOURCE_DATABASE_PATH)
 
     try:
-         # Execute the SQL query and receive its result as a DataFrame.
+        # Execute the SQL query and receive its result as a DataFrame.
         sales_order_lines = extract_sales_order_lines(connection)
 
         # Display only a preview while retaining the complete extracted dataset.
