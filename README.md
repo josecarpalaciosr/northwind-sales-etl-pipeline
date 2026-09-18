@@ -247,7 +247,7 @@ Run the complete test suite with:
 python -m pytest -v
 ```
 
-The transformation and validation tests use small representative DataFrames so that individual rules can be verified quickly and independently. Load tests use temporary SQLite databases managed by pytest, preventing automated tests from modifying the real analytical database. Analytical integration and semantic tests execute the actual SQL files against the generated analytical database and validate their output structure and principal business rules.
+The transformation and validation tests use small representative DataFrames so that individual rules can be verified quickly and independently. Load tests use temporary SQLite databases managed by pytest, preventing automated tests from modifying the real analytical database. Analytical integration and semantic tests build a temporary analytical database from the source data, execute the actual SQL files against it, and validate their output structure and principal business rules.
 
 ## Logging
 
