@@ -16,6 +16,8 @@ The core ETL pipeline is complete and covered by automated tests.
 - ✅ Structured application logging
 - ✅ Continuous integration with GitHub Actions
 - ✅ Project documentation
+- ✅ Reusable analytical SQL queries
+- ✅ Automated analytical integration and semantic tests
 - 📋 Power BI dashboard planned
 - 📋 Docker and PostgreSQL migration planned
 
@@ -55,6 +57,29 @@ The financial metrics are calculated as follows:
 
 All monetary results are rounded to two decimal places.
 
+## Analytical SQL Layer
+
+The processed `sales_order_lines` table supports a collection of reusable analytical SQL queries stored in `sql/analytics/`.
+
+| Query | Business purpose | Main SQL concepts |
+|---|---|---|
+| `monthly_sales_performance.sql` | Analyze monthly revenue trends and month-over-month growth | CTEs, aggregation, `LAG()`, window functions |
+| `product_performance.sql` | Compare product revenue, category contribution, and product rankings | Partitioned window functions, `DENSE_RANK()` |
+| `country_performance.sql` | Measure customer-country revenue, average order value, and global contribution | Distinct counts, global window calculations, ranking |
+| `employee_performance.sql` | Evaluate employee sales, average order value, and on-time shipment performance | Multi-level aggregation, conditional aggregation, ranking |
+| `discount_performance.sql` | Compare revenue and effective discount rates across discount bands | `CASE`, conditional grouping, global revenue share |
+
+The queries operate on the validated analytical table rather than directly on the transactional Northwind schema. This separates the ETL process from the reporting layer and provides consistent business-ready metrics for downstream tools such as Power BI.
+
+The analytical queries include:
+
+- Monthly gross, discount, and net revenue.
+- Month-over-month net revenue growth.
+- Product rankings within categories and across the complete catalog.
+- Country-level revenue contribution and average order value.
+- Employee revenue and on-time shipment performance.
+- Discount-band utilization, effective rates, and revenue contribution.
+
 ## Data Quality Validation
 
 The pipeline validates transformed data before loading it into the analytical database.
@@ -80,7 +105,7 @@ The validation stage raises a descriptive `ValueError` immediately when a rule f
 | Pandas | Data extraction results, transformations, and validation |
 | SQL | Relational extraction and analytical database objects |
 | SQLite | Transactional source and analytical target databases |
-| pytest | Automated testing of transform, validation, and load stages |
+| pytest | Automated testing of transformation, validation, loading, and analytical SQL |
 | Python logging | Pipeline execution records and error traceability |
 | GitHub Actions | Continuous integration across supported Python versions |
 | Git and GitHub | Version control, feature branches, and pull-request workflow |
@@ -104,6 +129,11 @@ northwind-sales-etl-pipeline/
 │   └── figures/
 ├── sql/
 │   ├── analytics/
+│   │   ├── country_performance.sql
+│   │   ├── discount_performance.sql
+│   │   ├── employee_performance.sql
+│   │   ├── monthly_sales_performance.sql
+│   │   └── product_performance.sql
 │   └── extraction/
 │       └── sales_order_lines.sql
 ├── src/
@@ -117,6 +147,7 @@ northwind-sales-etl-pipeline/
 │       ├── transform.py
 │       └── validate.py
 ├── tests/
+│   ├── test_analytics.py
 │   ├── test_load.py
 │   ├── test_transform.py
 │   └── test_validate.py
@@ -132,9 +163,9 @@ northwind-sales-etl-pipeline/
 - `logs/`: receives generated pipeline execution logs.
 - `reports/figures/`: is reserved for generated analytical visualizations.
 - `sql/extraction/`: contains SQL used to extract transactional sales data.
-- `sql/analytics/`: is reserved for analytical queries.
+- `sql/analytics/`: contains reusable business-oriented SQL queries for monthly, product, country, employee, and discount analysis.
 - `src/northwind_etl/`: contains the installable ETL package.
-- `tests/`: contains automated tests organized by pipeline stage.
+- `tests/`: contains unit, integration, and semantic tests for the ETL pipeline and analytical SQL layer.
 
 ## Installation
 
@@ -200,13 +231,15 @@ Generated outputs:
 
 ## Automated Testing
 
-The project includes 16 automated tests covering successful behavior and expected failure conditions across the transformation, validation, and load stages.
+The project includes 26 automated tests covering successful behavior and expected failure conditions across the transformation, validation, load, and analytical SQL stages. The analytical SQL tests confirm that every query executes successfully, preserves its expected output schema, and satisfies key business invariants such as revenue shares totaling approximately 100%, rankings starting at one, valid percentage ranges, and correct month-over-month calculations.
 
 | Stage | Tests | Main coverage |
 |---|---:|---|
+| Analytics | 10 | Query execution, output schemas, monthly growth, revenue shares, rankings, percentage ranges, and discount consistency |
 | Transform | 5 | Date conversion, missing-country handling, employee-name cleaning, financial calculations, and preservation of the original DataFrame |
 | Validate | 9 | Valid data, empty datasets, missing columns, null values, duplicates, invalid quantities, negative prices, invalid discounts, and inconsistent revenue |
 | Load | 2 | Analytical table and index creation, plus repeatable full-refresh loading |
+| **Total** | **26** | ETL and analytical SQL validation |
 
 Run the complete test suite with:
 
@@ -214,7 +247,7 @@ Run the complete test suite with:
 python -m pytest -v
 ```
 
-The tests use small representative DataFrames so that individual rules can be verified quickly and independently. Load tests use temporary SQLite databases managed by pytest, preventing automated tests from modifying the real analytical database.
+The transformation and validation tests use small representative DataFrames so that individual rules can be verified quickly and independently. Load tests use temporary SQLite databases managed by pytest, preventing automated tests from modifying the real analytical database. Analytical integration and semantic tests build a temporary analytical database from the source data, execute the actual SQL files against it, and validate their output structure and principal business rules.
 
 ## Logging
 
@@ -262,7 +295,7 @@ A successful pipeline execution currently produces:
 | Transformed sales order lines | 609,283 |
 | Transformed columns | 27 |
 | Loaded analytical rows | 609,283 |
-| Automated tests | 16 |
+| Automated tests | 26 |
 | Analytical indexes | 3 |
 
 The unchanged row count confirms that the transformation preserves sales-line granularity. The four additional transformed columns provide cleaned employee information and calculated financial metrics for analytical use.
@@ -275,7 +308,8 @@ The unchanged row count confirms that the transformation preserves sales-line gr
 - [x] Add structured logging
 - [x] Add continuous integration
 - [x] Create complete project documentation
-- [ ] Add analytical SQL queries
+- [x] Add analytical SQL queries
+- [x] Add automated tests for the analytical SQL layer
 - [ ] Build a Power BI dashboard
 - [ ] Containerize the project with Docker
 - [ ] Migrate the analytical database to PostgreSQL
