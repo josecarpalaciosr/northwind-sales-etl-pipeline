@@ -34,3 +34,12 @@ Thumbs.db
 *.egg-info/
 build/
 dist/
+
+# Ignore reproducible reporting exports generated locally.
+data/exports/*.csv
+!data/exports/.gitkeep
+
+# Ignore intermediate Power BI workbooks; keep the final report versioned.
+reports/Northwind_Sales_Analytics.pbix
+reports/Northwind_Sales_Analytics_v2.pbix
+reports/Northwind_Sales_Analytics_v2_pre_cleanup.pbix

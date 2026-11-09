@@ -1,4 +1,4 @@
-"""Integration tests for the analytical SQL queries."""
+"""Validate reusable analytical SQL reference queries independently of Power BI."""
 
 import sqlite3
 from pathlib import Path
@@ -15,7 +15,8 @@ from northwind_etl.validate import validate_sales_order_lines
 # Resolve the project root from tests/test_analytics.py.
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
-# Define the directory containing the analytical SQL queries.
+# Define the reusable SQL reference analyses.
+# These queries are tested independently and are not Power BI data sources.
 ANALYTICS_DIRECTORY = PROJECT_ROOT / "sql" / "analytics"
 
 # Define the tracked Northwind source database used to build test data.
@@ -30,10 +31,11 @@ SOURCE_DATABASE_PATH = (
 def analytics_database_path(
     tmp_path_factory: pytest.TempPathFactory,
 ) -> Path:
-    """Build a temporary analytical database for the SQL tests."""
+    """Build a temporary database for testing the reference SQL analyses."""
 
-    # Create a temporary directory managed automatically by pytest.
-    # The module scope allows all analytical tests to reuse the same database.
+    # Recreate the production ETL output in a temporary location.
+    # All analytical queries share this database during the test module,
+    # and pytest removes it automatically after the test session.
     temporary_directory = tmp_path_factory.mktemp("analytics")
 
     # Define the temporary SQLite database without modifying the real
@@ -74,7 +76,7 @@ def execute_analytical_query(
     query_filename: str,
     database_path: Path,
 ) -> pd.DataFrame:
-    """Execute an analytical SQL query against a database."""
+    """Execute a reusable reference SQL query against a database."""
 
     query_path = ANALYTICS_DIRECTORY / query_filename
     query = query_path.read_text(encoding="utf-8")
@@ -82,6 +84,9 @@ def execute_analytical_query(
     with sqlite3.connect(database_path) as connection:
         return pd.read_sql_query(query, connection)
 
+
+# Confirm that every reusable query still executes against the current
+# analytical schema and returns its documented output columns.
 @pytest.mark.parametrize(
     ("query_filename", "expected_columns"),
     [
