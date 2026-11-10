@@ -10,4 +10,5 @@
 *.db binary
 *.pbix binary
 *.png binary
-
+*.jpg binary
+*.jpeg binary
